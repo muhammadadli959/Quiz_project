@@ -7,8 +7,8 @@ pertanyaan pengetahuan umum, fakta menyenangkan, dan dasar-dasar kriptografi.
 
 | Informasi | Keterangan |
 | --- | --- |
-| Nama | ... |
-| NIM | ... |
+| Nama | Muhammad Adli Humaidi |
+| NIM | 241401103 |
 | Lab | Lab 5 |
 
 ## Informasi Aplikasi
