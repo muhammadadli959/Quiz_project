@@ -54,6 +54,10 @@ class _QuizAppState extends State<QuizApp> {
       brightness: brightness,
       surface: isDark ? const Color(0xFF1B1D29) : Colors.white,
     );
+    final textTheme = ThemeData(
+      brightness: brightness,
+      fontFamily: 'Nunito',
+    ).textTheme;
 
     return ThemeData(
       useMaterial3: true,
@@ -63,7 +67,7 @@ class _QuizAppState extends State<QuizApp> {
           ? const Color(0xFF12131B)
           : const Color(0xFFF7F7FC),
       fontFamily: 'Nunito',
-      textTheme: ThemeData(brightness: brightness).textTheme.apply(
+      textTheme: textTheme.apply(
         bodyColor: isDark ? const Color(0xFFF3F2FA) : const Color(0xFF24233A),
         displayColor: isDark
             ? const Color(0xFFF3F2FA)
