@@ -30,18 +30,24 @@ class PrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(18),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-            if (icon != null) ...[
-              const SizedBox(width: 10),
-              Icon(icon, size: 20),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (icon != null) ...[
+                const SizedBox(width: 10),
+                Icon(icon, size: 20),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

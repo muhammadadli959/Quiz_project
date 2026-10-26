@@ -42,9 +42,19 @@ class QuizScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).maybePop(),
               icon: const Icon(Icons.arrow_back_rounded),
             ),
-            title: Text(
-              'Halo, ${session.playerName}!',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Halo, ${session.playerName}!',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(session.quiz.title, style: const TextStyle(fontSize: 11)),
+              ],
             ),
             centerTitle: true,
             actions: [

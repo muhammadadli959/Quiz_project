@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../data/quiz_questions.dart';
 import '../models/quiz_session.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/quiz_artwork.dart';
 import 'quiz_screen.dart';
+import 'quiz_catalog_screen.dart';
 import 'result_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -27,6 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final _formKey = GlobalKey<FormState>();
 
   @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.session.playerName;
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
@@ -48,6 +56,22 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => QuizScreen(session: widget.session),
+      ),
+    );
+  }
+
+  void _openCatalog() {
+    if (!widget.session.hasProgress && !widget.session.isComplete) {
+      if (!_formKey.currentState!.validate()) return;
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => QuizCatalogScreen(
+          session: widget.session,
+          playerName: widget.session.playerName.isNotEmpty
+              ? widget.session.playerName
+              : _nameController.text.trim(),
+        ),
       ),
     );
   }
@@ -109,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 22),
         _nameForm(context),
         const SizedBox(height: 20),
-        _startButton(),
+        _actionButtons(),
         const SizedBox(height: 20),
         _quizDetails(context),
       ],
@@ -130,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 _nameForm(context),
                 const SizedBox(height: 20),
-                _startButton(),
+                _actionButtons(),
                 const SizedBox(height: 24),
                 _quizDetails(context),
               ],
@@ -246,24 +270,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _startButton() {
-    final label = widget.session.hasProgress
-        ? 'Lanjutkan kuis'
-        : widget.session.isComplete
-        ? 'Lihat hasil'
-        : 'Mulai kuis';
+  Widget _actionButtons() {
+    if (!widget.session.hasProgress && !widget.session.isComplete) {
+      return PrimaryButton(
+        label: 'Jelajahi semua kuis',
+        icon: Icons.explore_rounded,
+        onPressed: _openCatalog,
+      );
+    }
 
-    return PrimaryButton(
-      label: label,
-      icon: Icons.arrow_forward_rounded,
-      onPressed: _openQuiz,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PrimaryButton(
+          label: widget.session.hasProgress ? 'Lanjutkan kuis' : 'Lihat hasil',
+          icon: Icons.arrow_forward_rounded,
+          onPressed: _openQuiz,
+        ),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: _openCatalog,
+          icon: const Icon(Icons.search_rounded),
+          label: const Text('Pilih kuis lainnya'),
+        ),
+      ],
     );
   }
 
   Widget _quizDetails(BuildContext context) {
+    final questionCount = quizCatalog.fold<int>(
+      0,
+      (count, quiz) => count + quiz.questions.length,
+    );
     final details = [
-      (Icons.help_outline_rounded, '${widget.session.totalQuestions} soal'),
-      (Icons.schedule_rounded, '± 3 menit'),
+      (Icons.grid_view_rounded, '${quizCatalog.length} kuis'),
+      (Icons.help_outline_rounded, '$questionCount soal tersedia'),
       (Icons.emoji_events_outlined, 'Tunjukkan aksimu'),
     ];
 
@@ -329,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        '5 pertanyaan, banyak hal baru!',
+                        '${quizCatalog.length} kuis, banyak hal baru!',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.82),
                           fontSize: 12,

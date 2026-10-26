@@ -16,7 +16,7 @@ class QuizApp extends StatefulWidget {
 }
 
 class _QuizAppState extends State<QuizApp> {
-  late final QuizSession _session = QuizSession(quizQuestions);
+  late final QuizSession _session = QuizSession(quizCatalog.first);
   ThemeMode _themeMode = ThemeMode.light;
 
   @override

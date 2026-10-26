@@ -1,17 +1,19 @@
 import 'package:flutter/foundation.dart';
 
+import 'quiz_pack.dart';
 import 'quiz_question.dart';
 
 class QuizSession extends ChangeNotifier {
-  QuizSession(this.questions)
-    : _answers = List<int?>.filled(questions.length, null);
+  QuizSession(this.quiz)
+    : _answers = List<int?>.filled(quiz.questions.length, null);
 
-  final List<QuizQuestion> questions;
-  final List<int?> _answers;
+  QuizPack quiz;
+  List<int?> _answers;
   String _playerName = '';
   int _currentIndex = 0;
   bool _isComplete = false;
 
+  List<QuizQuestion> get questions => quiz.questions;
   String get playerName => _playerName;
   int get currentIndex => _currentIndex;
   bool get isComplete => _isComplete;
@@ -25,13 +27,12 @@ class QuizSession extends ChangeNotifier {
   int? get selectedAnswer => _answers[_currentIndex];
   List<int?> get answers => List.unmodifiable(_answers);
 
-  void start(String name) {
+  void start(String name, {QuizPack? quiz}) {
+    if (quiz != null) this.quiz = quiz;
+    _answers = List<int?>.filled(questions.length, null);
     _playerName = name.trim();
     _currentIndex = 0;
     _isComplete = false;
-    for (var index = 0; index < _answers.length; index++) {
-      _answers[index] = null;
-    }
     notifyListeners();
   }
 
