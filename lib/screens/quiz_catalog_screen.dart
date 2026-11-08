@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../data/quiz_questions.dart';
+import '../models/app_store.dart';
 import '../models/quiz_pack.dart';
-import '../models/quiz_session.dart';
 import '../widgets/quiz_catalog_card.dart';
-import 'quiz_screen.dart';
+import 'quiz_detail_screen.dart';
 
 class QuizCatalogScreen extends StatefulWidget {
   const QuizCatalogScreen({
     super.key,
-    required this.session,
-    required this.playerName,
+    required this.store,
+    this.embedded = false,
   });
 
-  final QuizSession session;
-  final String playerName;
+  final AppStore store;
+  final bool embedded;
 
   @override
   State<QuizCatalogScreen> createState() => _QuizCatalogScreenState();
@@ -32,7 +31,7 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
 
   List<QuizPack> get _visibleQuizzes {
     final search = _searchController.text.trim().toLowerCase();
-    return quizCatalog.where((quiz) {
+    return widget.store.allQuizzes.where((quiz) {
       final matchesCategory =
           _selectedCategory == null || quiz.category == _selectedCategory;
       final matchesSearch =
@@ -46,14 +45,15 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
 
   Future<void> _openQuiz(QuizPack quiz) async {
     final hasDifferentQuizInProgress =
-        widget.session.hasProgress && widget.session.quiz.title != quiz.title;
+        widget.store.session.hasProgress &&
+        widget.store.session.quiz.id != quiz.id;
     if (hasDifferentQuizInProgress) {
       final shouldReplace = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Mulai kuis baru?'),
           content: Text(
-            'Progres "${widget.session.quiz.title}" akan digantikan. '
+            'Progres "${widget.store.session.quiz.title}" akan digantikan. '
             'Kamu bisa melanjutkannya jika memilih kuis yang sama.',
           ),
           actions: [
@@ -71,29 +71,35 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
       if (shouldReplace != true || !mounted) return;
     }
 
-    if (!widget.session.hasProgress ||
-        widget.session.quiz.title != quiz.title) {
-      widget.session.start(widget.playerName, quiz: quiz);
-    }
     if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => QuizScreen(session: widget.session),
+        builder: (_) => QuizDetailScreen(
+          store: widget.store,
+          quiz: quiz,
+          replaceExistingProgress: hasDifferentQuizInProgress,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.store,
+      builder: (context, _) => _buildCatalog(context),
+    );
+  }
+
+  Widget _buildCatalog(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Kembali',
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
+        automaticallyImplyLeading: !widget.embedded,
+        leading: widget.embedded
+            ? const Icon(Icons.explore_rounded, color: Color(0xFF6658D3))
+            : null,
         title: const Text(
           'Jelajahi kuis',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
@@ -126,7 +132,9 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _CatalogHeading(totalQuizzes: quizCatalog.length),
+                      _CatalogHeading(
+                        totalQuizzes: widget.store.allQuizzes.length,
+                      ),
                       const SizedBox(height: 18),
                       TextField(
                         key: const Key('quiz-search-field'),
@@ -169,7 +177,7 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
                         children: [
                           _CategoryFilter(
                             label: 'Semua',
-                            count: quizCatalog.length,
+                            count: widget.store.allQuizzes.length,
                             icon: Icons.grid_view_rounded,
                             color: theme.colorScheme.primary,
                             selected: _selectedCategory == null,
@@ -179,7 +187,7 @@ class _QuizCatalogScreenState extends State<QuizCatalogScreen> {
                           for (final category in QuizCategory.values)
                             _CategoryFilter(
                               label: category.title,
-                              count: quizCatalog
+                              count: widget.store.allQuizzes
                                   .where((quiz) => quiz.category == category)
                                   .length,
                               icon: category.icon,

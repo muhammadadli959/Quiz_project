@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/quiz_session.dart';
@@ -5,19 +7,60 @@ import '../widgets/answer_option.dart';
 import '../widgets/primary_button.dart';
 import 'result_screen.dart';
 
-class QuizScreen extends StatelessWidget {
+class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key, required this.session});
 
   final QuizSession session;
 
+  @override
+  State<QuizScreen> createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  Timer? _timer;
+  bool _resultOpened = false;
+
+  QuizSession get session => widget.session;
+
+  @override
+  void initState() {
+    super.initState();
+    if (session.isTimerEnabled) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        session.tick();
+        if (session.isComplete) _openResult();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _openResult() {
+    if (_resultOpened || !mounted) return;
+    _resultOpened = true;
+    _timer?.cancel();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ResultScreen(session: session)),
+      );
+    });
+  }
+
   void _continue(BuildContext context) {
     if (session.isComplete) {
+      _timer?.cancel();
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => ResultScreen(session: session)),
       );
       return;
     }
     if (session.submitAnswer()) {
+      _timer?.cancel();
       Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => ResultScreen(session: session)),
       );
@@ -58,6 +101,21 @@ class QuizScreen extends StatelessWidget {
             ),
             centerTitle: true,
             actions: [
+              if (session.isTimerEnabled)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Center(
+                    child: Text(
+                      _formatTime(session.remainingSeconds ?? 0),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: (session.remainingSeconds ?? 0) <= 10
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
               Padding(
                 padding: const EdgeInsets.only(right: 18),
                 child: Center(
@@ -199,6 +257,12 @@ class QuizScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainder = seconds % 60;
+    return '$minutes:${remainder.toString().padLeft(2, '0')}';
   }
 }
 
